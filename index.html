@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Letters AT1</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+            color: black;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: black;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            padding: 0 10px;
+        }
+        
+        .description {
+            text-align: center;
+            max-width: 600px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            color: black;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: min(100%, 500px);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: min(60vh, 500px);
+            display: block;
+            border-radius: 5px;
+            background: black;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: min(100%, 400px);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: clamp(15px, 3vw, 20px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            color: black;
+        }
+        
+        .control-group {
+            margin-bottom: clamp(15px, 3vw, 20px);
+        }
+        
+        .control-group h3 {
+            margin-top: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .slider-container label {
+            width: min(120px, 30%);
+            font-weight: bold;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+        
+        .slider-container input {
+            flex: 1;
+            margin: 0 8px;
+            min-width: 150px;
+        }
+        
+        .slider-container span {
+            width: min(50px, 20%);
+            text-align: right;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .toggle-container label {
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .lighting-controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .lighting-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .lighting-controls h4,
+        .lighting-info h4 {
+            margin-top: 0;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+        
+        .info {
+            margin-top: 20px;
+            font-size: 0.9em;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .footer p {
+            margin: 5px 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .footer .name {
+            color: #2E7D32;
+            font-size: 1.2rem;
+        }
+
+        .footer .nrp {
+            color: #1565C0;
+            font-size: 1.1rem;
+        }
+        
+        /* Mobile First Approach */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .canvas-container,
+            .controls {
+                min-width: 100%;
+            }
+            
+            #canvas {
+                height: min(50vh, 400px);
+            }
+            
+            .slider-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .slider-container label {
+                width: 100%;
+            }
+            
+            .slider-container input {
+                margin: 0;
+                min-width: 100%;
+            }
+            
+            .slider-container span {
+                width: 100%;
+                text-align: left;
+            }
+            
+            .toggle-container {
+                justify-content: space-between;
+            }
+
+            .footer {
+                margin-top: 20px;
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .description {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .canvas-container,
+            .controls {
+                padding: 8px;
+            }
+            
+            #canvas {
+                height: min(45vh, 350px);
+            }
+            
+            .control-group h3 {
+                font-size: 1.1rem;
+            }
+            
+            .toggle-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .toggle-container label {
+                margin-right: 0;
+            }
+
+            .footer {
+                margin-top: 15px;
+                padding: 10px;
+            }
+
+            .footer p {
+                font-size: 1rem;
+            }
+
+            .footer .name {
+                font-size: 1.1rem;
+            }
+
+            .footer .nrp {
+                font-size: 1rem;
+            }
+        }
+        
+        /* Large screens */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1400px;
+            }
+            
+            #canvas {
+                height: min(70vh, 600px);
+            }
+        }
+        
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .slider-container input {
+                min-height: 44px; /* Better touch target */
+            }
+            
+            .toggle-switch {
+                min-width: 60px;
+                min-height: 30px;
+            }
+            
+            .toggle-slider:before {
+                height: 20px;
+                width: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>3D Letters AT1</h1>
+    
+    <div class="description">
+        <p>Interaktif 3D model huruf "AT1" dengan kontrol lighting dan scaling menggunakan WebGL</p>
+    </div>
+    
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas" width="800" height="400">
+                Your browser does not support the HTML5 canvas element.
+                Please try using a modern browser like Chrome, Firefox, or Edge.
+            </canvas>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h3>Rotation Control</h3>
+                <div class="slider-container">
+                    <label for="rotationSlider">Rotation:</label>
+                    <input type="range" id="rotationSlider" min="-360" max="360" value="0" class="slider">
+                    <span id="rotationValue">0°</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3>Lighting Mode</h3>
+                <div class="toggle-container">
+                    <label for="lightingToggle">Fixed Lighting:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="lightingToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span id="lightingModeText" style="margin-left: 10px;">ON (Fixed)</span>
+                </div>
+                
+                <div id="fixedLightingInfo" class="lighting-info">
+                    <h4>Fixed Light Direction</h4>
+                    <p>X: 0.5, Y: 0.7, Z: 1.0</p>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Object Scaling</h3>
+                <div class="slider-container">
+                    <label for="scaleSlider">Scale:</label>
+                    <input type="range" id="scaleSlider" min="0.3" max="1.5" step="0.05" value="1.0" class="slider">
+                    <span id="scaleValue">1.0x</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p class="name">Ath Thahir Muhammad Isa Rahmatullah</p>
+        <p class="nrp">NRP: 5025231181</p>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
+
+    <!-- Application Files -->
+    <script src="data.js"></script>
+    <script src="helper.js"></script>
+    <script src="iohandler.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
